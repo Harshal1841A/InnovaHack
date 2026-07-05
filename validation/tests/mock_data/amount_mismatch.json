@@ -1,0 +1,12 @@
+{
+  "invoice_amount": {"value": "$9,800.00", "status": "found"},
+  "contract_amount": {"value": "USD 12500", "status": "found"},
+  "invoice_currency": {"value": "$", "status": "found"},
+  "contract_currency": {"value": "USD", "status": "found"},
+  "invoice_date": {"value": "2026-03-01", "status": "found"},
+  "contract_date": {"value": "2026-03-05", "status": "found"},
+  "invoice_vendor": {"value": "ABC Solutions Pvt Ltd", "status": "found"},
+  "contract_vendor": {"value": "ABC Solutions Pvt Ltd", "status": "found"},
+  "declared_purpose_code": {"value": "P0802", "status": "found"},
+  "invoice_description": {"value": "Software consultancy services rendered", "status": "found"}
+}

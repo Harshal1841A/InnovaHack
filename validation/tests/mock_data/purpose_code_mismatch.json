@@ -1,0 +1,12 @@
+{
+  "invoice_amount": {"value": "3000", "status": "found"},
+  "contract_amount": {"value": "3000", "status": "found"},
+  "invoice_currency": {"value": "USD", "status": "found"},
+  "contract_currency": {"value": "USD", "status": "found"},
+  "invoice_date": {"value": "2026-04-01", "status": "found"},
+  "contract_date": {"value": "2026-04-02", "status": "found"},
+  "invoice_vendor": {"value": "Bright Media LLP", "status": "found"},
+  "contract_vendor": {"value": "Bright Media LLP", "status": "found"},
+  "declared_purpose_code": {"value": "P0802", "status": "found"},
+  "invoice_description": {"value": "Digital marketing and advertising campaign management", "status": "found"}
+}

@@ -1,0 +1,12 @@
+{
+  "invoice_amount": {"value": "12500", "status": "found"},
+  "contract_amount": {"value": "12500", "status": "found"},
+  "invoice_currency": {"value": "USD", "status": "found"},
+  "contract_currency": {"value": "EUR", "status": "found"},
+  "invoice_date": {"value": "2026-03-01", "status": "found"},
+  "contract_date": {"value": "2026-03-02", "status": "found"},
+  "invoice_vendor": {"value": "Global Tech LLC", "status": "found"},
+  "contract_vendor": {"value": "Global Tech LLC", "status": "found"},
+  "declared_purpose_code": {"value": "P0802", "status": "found"},
+  "invoice_description": {"value": "IT consulting and implementation work", "status": "found"}
+}
