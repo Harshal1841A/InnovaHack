@@ -1,0 +1,12 @@
+{
+  "invoice_amount": {"value": null, "status": "not_found"},
+  "contract_amount": {"value": "USD 5000", "status": "found"},
+  "invoice_currency": {"value": "USD", "status": "found"},
+  "contract_currency": {"value": "USD", "status": "found"},
+  "invoice_date": {"value": "2026-02-10", "status": "found"},
+  "contract_date": {"value": "2026-02-12", "status": "found"},
+  "invoice_vendor": {"value": "Nova Consulting Inc", "status": "found"},
+  "contract_vendor": {"value": "Nova Consulting Inc", "status": "found"},
+  "declared_purpose_code": {"value": "P0802", "status": "found"},
+  "invoice_description": {"value": "Consulting services", "status": "found"}
+}

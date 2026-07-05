@@ -1,0 +1,40 @@
+{
+  "_source": "RBI FEMA Annexure II (rbi.org.in circular on purpose codes for forex transaction reporting), cross-checked against AD-bank republications (e.g. rbinternational.com India Purpose Codes).",
+  "codes": {
+    "P0802": {
+      "description": "Software implementation/consultancy (other than those covered in SOFTEX form)",
+      "keywords": ["software", "consultancy", "consulting", "implementation", "development", "custom", "application", "programming", "it services", "system integration", "advisory"],
+      "commonly_confused_with": ["P0804", "P0807", "P1006"]
+    },
+    "P0803": {
+      "description": "Database, data processing charges",
+      "keywords": ["database", "data processing", "data entry", "data migration", "etl"],
+      "commonly_confused_with": ["P0802"]
+    },
+    "P0804": {
+      "description": "Repair and maintenance of computer and software",
+      "keywords": ["maintenance", "support", "repair", "bug fix", "patch", "upkeep", "amc", "annual maintenance"],
+      "commonly_confused_with": ["P0802"]
+    },
+    "P0806": {
+      "description": "Other information services - subscription to newspapers, periodicals, etc.",
+      "keywords": ["subscription", "newspaper", "periodical", "news", "publication"],
+      "commonly_confused_with": ["P0802"]
+    },
+    "P0807": {
+      "description": "Off-site software exports (software products/services developed in India and delivered electronically, typically reported via SOFTEX)",
+      "keywords": ["offsite", "off-site", "softex", "software export", "product export", "remote delivery"],
+      "commonly_confused_with": ["P0802"]
+    },
+    "P1006": {
+      "description": "Business and management consultancy (non-IT strategic/management advisory)",
+      "keywords": ["business consulting", "management consulting", "strategy", "strategic advice", "business planning", "market research", "advisory"],
+      "commonly_confused_with": ["P0802", "P1007"]
+    },
+    "P1007": {
+      "description": "Advertising, market research, and public opinion polling",
+      "keywords": ["advertising", "marketing", "seo", "digital marketing", "market research", "public opinion", "polling", "content creation"],
+      "commonly_confused_with": ["P1006"]
+    }
+  }
+}
