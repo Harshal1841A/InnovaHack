@@ -1,0 +1,1615 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Aegis - Compliance Decision Engine</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            display: ['Space Grotesk', 'sans-serif'],
+            mono: ['IBM Plex Mono', 'monospace']
+          },
+          colors: {
+            paper: '#f3f1ea',
+            shell: '#ebe7dc',
+            card: '#fffdf8',
+            line: '#d5d0c3',
+            ink: '#141414',
+            mute: '#696458',
+            cobalt: '#2647d8',
+            teal: '#0d7a6a',
+            amber: '#9a6612',
+            rose: '#b52b35'
+          },
+          boxShadow: {
+            swiss: '0 1px 0 rgba(20,20,20,0.16)',
+            lift: '0 24px 60px rgba(20,20,20,0.07)'
+          },
+          keyframes: {
+            rise: {
+              '0%': { opacity: '0', transform: 'translateY(10px)' },
+              '100%': { opacity: '1', transform: 'translateY(0)' }
+            },
+            pulseSoft: {
+              '0%,100%': { opacity: '1' },
+              '50%': { opacity: '.45' }
+            },
+            stampIn: {
+              '0%': { opacity: '0', transform: 'scale(1.9) rotate(-10deg)' },
+              '55%': { opacity: '1', transform: 'scale(0.94) rotate(2deg)' },
+              '75%': { transform: 'scale(1.04) rotate(-1deg)' },
+              '100%': { opacity: '1', transform: 'scale(1) rotate(0)' }
+            },
+            floatSlow: {
+              '0%,100%': { transform: 'translateY(0)' },
+              '50%': { transform: 'translateY(-5px)' }
+            },
+            scanSweep: {
+              '0%': { transform: 'translateY(-100%)' },
+              '100%': { transform: 'translateY(2200%)' }
+            },
+            shimmer: {
+              '0%': { transform: 'translateX(-100%)' },
+              '100%': { transform: 'translateX(250%)' }
+            },
+            popIn: {
+              '0%': { opacity: '0', transform: 'scale(.9) translateY(6px)' },
+              '100%': { opacity: '1', transform: 'scale(1) translateY(0)' }
+            },
+            gradientPan: {
+              '0%,100%': { backgroundPosition: '0% 50%' },
+              '50%': { backgroundPosition: '100% 50%' }
+            },
+            fadeSlideDown: {
+              '0%': { opacity: '0', transform: 'translateY(-8px)' },
+              '100%': { opacity: '1', transform: 'translateY(0)' }
+            }
+          },
+          animation: {
+            rise: 'rise .45s cubic-bezier(.16,1,.3,1) both',
+            pulseSoft: 'pulseSoft 2.1s ease-in-out infinite',
+            stampIn: 'stampIn .5s cubic-bezier(.2,1.4,.4,1) both',
+            floatSlow: 'floatSlow 3.2s ease-in-out infinite',
+            popIn: 'popIn .35s cubic-bezier(.16,1,.3,1) both',
+            gradientPan: 'gradientPan 6s ease infinite',
+            fadeSlideDown: 'fadeSlideDown .5s cubic-bezier(.16,1,.3,1) both'
+          }
+        }
+      }
+    }
+  </script>
+  <!-- icons are inlined as SVG in-script; no external icon library needed -->
+  <style>
+    @keyframes rise { 0% { opacity: 0; transform: translateY(10px); } 100% { opacity: 1; transform: translateY(0); } }
+    @keyframes pulseSoft { 0%, 100% { opacity: 1; } 50% { opacity: .45; } }
+    @keyframes stampIn {
+      0% { opacity: 0; transform: scale(1.9) rotate(-10deg); }
+      55% { opacity: 1; transform: scale(0.94) rotate(2deg); }
+      75% { transform: scale(1.04) rotate(-1deg); }
+      100% { opacity: 1; transform: scale(1) rotate(0); }
+    }
+    @keyframes floatSlow { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
+    @keyframes scanSweep { 0% { transform: translateY(-100%); } 100% { transform: translateY(2200%); } }
+    @keyframes shimmer { 0% { transform: translateX(-100%); } 100% { transform: translateX(250%); } }
+    @keyframes popIn {
+      0% { opacity: 0; transform: scale(.9) translateY(6px); }
+      100% { opacity: 1; transform: scale(1) translateY(0); }
+    }
+    @keyframes gradientPan { 0%,100% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } }
+    @keyframes fadeSlideOut { 0% { opacity: 1; transform: translateY(0) scale(1); } 100% { opacity: 0; transform: translateY(-10px) scale(.99); } }
+    @keyframes checkPop {
+      0% { transform: scale(0) rotate(-30deg); opacity: 0; }
+      55% { transform: scale(1.3) rotate(6deg); opacity: 1; }
+      100% { transform: scale(1) rotate(0); opacity: 1; }
+    }
+    @keyframes ringExpand {
+      0% { transform: scale(.6); opacity: .55; }
+      100% { transform: scale(2.2); opacity: 0; }
+    }
+    @keyframes rippleAnim { to { transform: scale(2.6); opacity: 0; } }
+    @keyframes confettiFall {
+      0% { transform: translateY(-6px) rotate(0deg); opacity: 1; }
+      100% { transform: translateY(160px) rotate(420deg); opacity: 0; }
+    }
+    @keyframes underlineGrow { 0% { transform: scaleX(0); } 100% { transform: scaleX(1); } }
+    @keyframes railPulse { 0%,100% { opacity: .35; } 50% { opacity: .9; } }
+    @keyframes dotPing {
+      0% { transform: scale(1); opacity: .5; }
+      80%, 100% { transform: scale(2.4); opacity: 0; }
+    }
+    @keyframes cursorGlowMove {
+      0%, 100% { transform: translate(0, 0); }
+      50% { transform: translate(18px, -14px); }
+    }
+    * { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+    html { scroll-behavior: smooth; }
+    body {
+      background:
+        linear-gradient(rgba(213,208,195,.85) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(213,208,195,.85) 1px, transparent 1px),
+        radial-gradient(circle at top left, rgba(38,71,216,.08), transparent 28%),
+        radial-gradient(circle at bottom right, rgba(13,122,106,.07), transparent 24%),
+        #f3f1ea;
+      background-size: 64px 64px, 64px 64px, auto, auto, auto;
+      color: #141414;
+      min-height: 100vh;
+    }
+    button { cursor: pointer; }
+    .panel {
+      background: rgba(255,253,248,.88);
+      border: 1px solid #d5d0c3;
+      box-shadow: 0 1px 0 rgba(20,20,20,.12);
+      backdrop-filter: blur(8px);
+      transition: box-shadow .25s ease, transform .25s ease, border-color .25s ease;
+      position: relative;
+      isolation: isolate;
+    }
+    .panel:hover { box-shadow: 0 10px 30px rgba(20,20,20,.08); transform: translateY(-2px); }
+    .panel::before {
+      content: '';
+      position: absolute; inset: 0;
+      border-radius: inherit;
+      background: radial-gradient(240px circle at var(--mx, 50%) var(--my, 50%), rgba(38,71,216,.08), transparent 62%);
+      opacity: 0;
+      transition: opacity .35s ease;
+      pointer-events: none;
+      z-index: -1;
+    }
+    .panel:hover::before { opacity: 1; }
+    button, .scenario-btn { transition: transform .15s ease, background-color .2s ease, border-color .2s ease, color .2s ease, box-shadow .2s ease; }
+    button:active { transform: scale(.96); }
+    .scenario-btn:hover { border-color: #2647d8; transform: translateY(-1px); }
+    .scenario-btn.active { transform: translateY(0); }
+    #drop-zone { transition: border-color .3s ease, background-color .3s ease, transform .2s ease; }
+    #drop-zone:not(.drag-active) #drop-icon { animation: floatSlow 3.2s ease-in-out infinite; }
+    #drop-zone:hover #drop-icon { transform: rotate(-8deg) scale(1.1); border-color: #2647d8; }
+    #drop-zone.drag-active { transform: scale(1.015); box-shadow: 0 0 0 6px rgba(38,71,216,.08); }
+    #drop-zone.drag-active #drop-icon { animation: none; transform: scale(1.15) rotate(4deg); border-color: #2647d8; }
+    .stamp { animation: stampIn .5s cubic-bezier(.2,1.4,.4,1) both; transform-origin: center; }
+    .board-col > div { animation: rise .5s cubic-bezier(.16,1,.3,1) both; }
+    .board-col > div:nth-child(1), .board-col > div:nth-child(2) { animation-delay: .02s; }
+    .board-col > div:nth-child(3) { animation-delay: .08s; }
+    .board-col > div:nth-child(4) { animation-delay: .14s; }
+    .step-indicator { transition: border-color .3s ease, color .3s ease, background-color .3s ease, transform .2s ease; }
+    .scan-track { position: relative; overflow: hidden; }
+    .scan-track::after {
+      content: '';
+      position: absolute;
+      left: 0; right: 0; top: -20%;
+      height: 40%;
+      background: linear-gradient(180deg, transparent, rgba(38,71,216,.18), transparent);
+      animation: scanSweep 2.4s linear infinite;
+      pointer-events: none;
+    }
+    .progress-rail { background: #ded8cb; position: relative; overflow: hidden; }
+    .progress-rail::after {
+      content: '';
+      position: absolute;
+      top: 0; bottom: 0; left: 0;
+      width: 40%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,.55), transparent);
+      animation: shimmer 1.6s ease-in-out infinite;
+    }
+    .conf-bar-fill { transition: width 1s cubic-bezier(.16,1,.3,1); }
+    #toast { transition: transform .35s cubic-bezier(.2,1.4,.4,1), opacity .3s ease; }
+    .eyebrow {
+      font: 600 11px/1 'IBM Plex Mono', monospace;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+    }
+    .section-no {
+      font: 500 11px/1 'IBM Plex Mono', monospace;
+      color: #8a8577;
+      letter-spacing: .08em;
+    }
+    .field-input, textarea {
+      background: #f7f4ec;
+      border: 1px solid #d5d0c3;
+      color: #141414;
+      outline: none;
+    }
+    .field-input:focus, textarea:focus {
+      border-color: #2647d8;
+      box-shadow: 0 0 0 3px rgba(38,71,216,.10);
+    }
+    .status-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 999px;
+      display: inline-block;
+      background: #0d7a6a;
+      animation: pulseSoft 2.1s ease-in-out infinite;
+    }
+    .scroll-thin::-webkit-scrollbar { width: 6px; height: 6px; }
+    .scroll-thin::-webkit-scrollbar-thumb { background: #bdb7a8; }
+    .scenario-btn.active {
+      border-color: #2647d8;
+      color: #2647d8;
+      background: rgba(38,71,216,.06);
+    }
+    @media (min-width: 1280px) {
+      #case-board-stage.fit-active { display: flex; overflow: hidden; }
+      #case-board-stage.fit-active > .board-grid { flex: 1 1 auto; min-height: 0; width: 100%; grid-template-rows: minmax(0, 1fr); }
+      .board-col { min-height: 0; overflow-y: auto; }
+    }
+
+    /* ---- enhanced motion layer ---- */
+    .stage-exit { animation: fadeSlideOut .26s cubic-bezier(.4,0,1,1) both; }
+    .stage-enter { animation: rise .5s cubic-bezier(.16,1,.3,1) both; }
+
+    .brand-mark { transition: transform .35s cubic-bezier(.2,1.4,.4,1), box-shadow .35s ease; }
+    .brand-mark:hover { transform: rotate(-6deg) scale(1.06); box-shadow: 0 6px 18px rgba(38,71,216,.35); }
+
+    .status-dot-wrap { position: relative; display: inline-flex; align-items: center; justify-content: center; }
+    .status-dot-wrap::after {
+      content: '';
+      position: absolute;
+      width: 7px; height: 7px;
+      border-radius: 999px;
+      background: #0d7a6a;
+      animation: dotPing 1.8s cubic-bezier(.2,.6,.4,1) infinite;
+    }
+
+    .text-gradient-flow {
+      background: linear-gradient(90deg, #141414, #2647d8, #0d7a6a, #141414);
+      background-size: 300% 100%;
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      animation: gradientPan 7s ease infinite;
+    }
+
+    .underline-grow {
+      transform-origin: left;
+      animation: underlineGrow .6s cubic-bezier(.16,1,.3,1) both;
+      animation-delay: .2s;
+    }
+
+    /* magnetic shimmer CTA */
+    .btn-shimmer { position: relative; overflow: hidden; }
+    .btn-shimmer::after {
+      content: '';
+      position: absolute;
+      top: 0; bottom: 0; left: -60%;
+      width: 40%;
+      background: linear-gradient(115deg, transparent, rgba(255,255,255,.35), transparent);
+      transform: skewX(-18deg);
+      transition: left .6s ease;
+    }
+    .btn-shimmer:hover::after { left: 130%; }
+
+    /* ripple */
+    .ripple-host { position: relative; overflow: hidden; }
+    .ripple-el {
+      position: absolute;
+      border-radius: 999px;
+      background: rgba(255,255,255,.55);
+      transform: scale(0);
+      opacity: .8;
+      animation: rippleAnim .55s ease-out forwards;
+      pointer-events: none;
+    }
+    .ripple-el.dark { background: rgba(38,71,216,.28); }
+
+    /* processing timeline */
+    #processing-stage .space-y-4 { position: relative; }
+    .step-row { transition: border-color .35s ease, background-color .35s ease, transform .3s ease, box-shadow .35s ease; position: relative; }
+    .step-row.is-active { border-color: #2647d8 !important; box-shadow: 0 0 0 3px rgba(38,71,216,.10); transform: translateX(2px); }
+    .step-row.is-active .step-indicator { border-color: #2647d8; color: #2647d8; box-shadow: 0 0 0 0 rgba(38,71,216,.4); animation: railPulse 1.3s ease-in-out infinite; }
+    .step-row.is-done { border-color: rgba(13,122,106,.35) !important; background: rgba(13,122,106,.05) !important; }
+    .step-row.is-done .step-indicator { border-color: #0d7a6a; color: #0d7a6a; background: rgba(13,122,106,.08); }
+    .step-check-pop { animation: checkPop .45s cubic-bezier(.2,1.4,.4,1) both; }
+    .step-ring {
+      position: absolute; inset: -4px; border-radius: 999px;
+      border: 2px solid rgba(13,122,106,.5);
+      animation: ringExpand .55s ease-out both;
+      pointer-events: none;
+    }
+    .progress-head {
+      position: absolute; top: 50%; width: 11px; height: 11px; margin-top: -5.5px; margin-left: -5.5px;
+      border-radius: 999px; background: #2647d8;
+      box-shadow: 0 0 0 5px rgba(38,71,216,.16), 0 1px 4px rgba(20,20,20,.3);
+      transition: left .7s cubic-bezier(.16,1,.3,1);
+      z-index: 2;
+    }
+
+    /* card entrance + tilt */
+    .reveal-card { animation: rise .55s cubic-bezier(.16,1,.3,1) both; }
+    .panel { will-change: transform; }
+    .badge-pulse { position: relative; }
+    .badge-pulse::before {
+      content: '';
+      position: absolute; inset: 0;
+      border-radius: inherit;
+      border: 1px solid currentColor;
+      opacity: .5;
+      animation: ringExpand 1s ease-out;
+    }
+
+    /* confetti */
+    .confetti-piece { position: fixed; top: 0; left: 0; z-index: 60; border-radius: 2px; }
+
+    /* toast spring */
+    #toast.toast-show { transform: translateX(0) !important; opacity: 1 !important; }
+    #toast { transition: transform .5s cubic-bezier(.34,1.56,.64,1), opacity .3s ease; }
+
+    /* scenario active underline */
+    .scenario-btn { position: relative; }
+    .scenario-btn.active::after {
+      content: '';
+      position: absolute; left: 8px; right: 8px; bottom: 4px; height: 2px;
+      background: #2647d8;
+      animation: underlineGrow .35s cubic-bezier(.16,1,.3,1) both;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation-duration: .001ms !important; animation-iteration-count: 1 !important; transition-duration: .001ms !important; }
+    }
+  </style>
+</head>
+<body class="font-sans">
+  <div class="h-1 w-full grid grid-cols-5">
+    <div class="bg-ink"></div>
+    <div class="bg-cobalt"></div>
+    <div class="bg-teal"></div>
+    <div class="bg-amber"></div>
+    <div class="bg-rose"></div>
+  </div>
+
+  <header class="sticky top-0 z-40 border-b border-line/80 bg-paper/90 backdrop-blur-xl animate-fadeSlideDown">
+    <div class="max-w-7xl mx-auto px-5 md:px-8 py-4 flex items-center justify-between gap-4">
+      <div class="flex items-center gap-3">
+        <div class="brand-mark w-11 h-11 flex items-center justify-center bg-cobalt text-white rounded-sm shadow-swiss">
+          <i data-lucide="shield-check" class="w-5 h-5"></i>
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <h1 class="font-display text-lg font-semibold tracking-tight">AEGIS</h1>
+            <span class="w-2 h-2 border border-line rotate-45"></span>
+          </div>
+          <p class="text-[11px] text-mute font-mono tracking-widest uppercase">Compliance Decision Engine</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-3">
+        <div class="hidden sm:flex items-center gap-2 text-[11px] text-mute font-mono uppercase tracking-wider">
+          <span class="status-dot-wrap"><span class="status-dot"></span></span>
+          API Ready
+        </div>
+        <button onclick="resetFlow(event)" class="ripple-host px-3 py-2 text-[11px] font-mono uppercase tracking-wider border border-line bg-card hover:bg-shell hover:border-cobalt transition-colors rounded-sm">Reset Flow</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-7xl w-full mx-auto px-5 md:px-8 py-8 md:py-10">
+    <section id="upload-stage" class="stage-enter">
+      <div class="max-w-3xl mx-auto">
+        <div class="text-center mb-12">
+          <p class="eyebrow text-cobalt mb-3">Dossier 04 / Intake</p>
+          <h2 class="font-display text-4xl md:text-6xl leading-none tracking-tight mb-4 text-gradient-flow">Case Documents</h2>
+          <div class="w-12 h-px bg-ink/30 mx-auto mb-4 underline-grow"></div>
+          <p class="max-w-2xl mx-auto text-[15px] leading-7 text-mute">
+            Upload invoices, manifests, origin certificates, or supporting customs material for automated OCR, entity verification, and recommendation synthesis.
+          </p>
+        </div>
+
+        <div class="panel rounded-sm p-4 md:p-5 shadow-lift">
+          <div id="drop-zone" class="rounded-sm border-2 border-dashed border-line bg-card px-6 py-14 md:py-16 text-center transition-colors hover:border-cobalt">
+            <input type="file" id="file-input" multiple class="hidden" onchange="handleFileSelect(event)">
+            <div id="drop-icon" class="w-16 h-16 mx-auto mb-5 flex items-center justify-center border border-line bg-shell transition-transform duration-300">
+              <i data-lucide="upload-cloud" class="w-8 h-8 text-cobalt"></i>
+            </div>
+            <h3 class="font-display text-2xl mb-2">Drop files here</h3>
+            <p class="text-[14px] text-mute mb-2">or <button class="text-cobalt underline underline-offset-4" onclick="document.getElementById('file-input').click()">browse from your computer</button></p>
+            <p class="text-[11px] text-mute font-mono uppercase tracking-wider">PDF, PNG, JPG / up to 50 MB / multi-document enabled</p>
+          </div>
+
+          <div id="selected-files-container" class="hidden mt-6 border-t border-line pt-5">
+            <div class="flex items-center justify-between mb-4">
+              <p class="eyebrow text-mute">Selected Files</p>
+              <p id="selected-files-count" class="text-[11px] font-mono text-mute uppercase tracking-wider">0 files</p>
+            </div>
+            <div id="selected-files-list" class="space-y-2"></div>
+            <button onclick="startProcessing(event)" class="ripple-host btn-shimmer mt-5 w-full bg-cobalt hover:bg-[#1837bc] text-white rounded-sm py-3.5 font-display text-base shadow-swiss transition-colors">Analyze Documents</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="processing-stage" class="hidden max-w-2xl mx-auto stage-enter">
+      <div class="panel scan-track rounded-sm p-6 md:p-8">
+        <div class="mb-10 text-center">
+          <p class="eyebrow text-cobalt mb-3">Pipeline</p>
+          <h2 class="font-display text-3xl md:text-4xl tracking-tight">Processing Documents</h2>
+        </div>
+
+        <div class="mb-8">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-[12px] text-mute font-mono uppercase tracking-wider">Progress</span>
+            <span id="progress-percent" class="text-[12px] text-cobalt font-mono uppercase tracking-wider">0%</span>
+          </div>
+          <div class="progress-rail h-1.5 rounded-full overflow-hidden relative">
+            <div id="progress-bar" class="h-full bg-cobalt transition-all duration-700 relative" style="width:0%">
+              <span id="progress-head" class="progress-head" style="left:100%"></span>
+            </div>
+          </div>
+        </div>
+
+        <div class="space-y-4">
+          <div id="step-ocr" class="step-row flex items-start gap-4 p-3 border border-line bg-card rounded-sm">
+            <div class="step-indicator w-8 h-8 flex items-center justify-center border border-line font-mono text-xs">1</div>
+            <div>
+              <p class="font-medium">Optical Character Recognition</p>
+              <p class="text-sm text-mute">Reading uploaded pages and detecting structured text blocks.</p>
+            </div>
+          </div>
+          <div id="step-extraction" class="step-row flex items-start gap-4 p-3 border border-line bg-card rounded-sm text-mute">
+            <div class="step-indicator w-8 h-8 flex items-center justify-center border border-line font-mono text-xs">2</div>
+            <div>
+              <p class="font-medium">Field Extraction</p>
+              <p class="text-sm">Collecting parties, invoice values, origin data, and trade references.</p>
+            </div>
+          </div>
+          <div id="step-validation" class="step-row flex items-start gap-4 p-3 border border-line bg-card rounded-sm text-mute">
+            <div class="step-indicator w-8 h-8 flex items-center justify-center border border-line font-mono text-xs">3</div>
+            <div>
+              <p class="font-medium">Validation Rules</p>
+              <p class="text-sm">Checking alignment across documents and rule-based inconsistencies.</p>
+            </div>
+          </div>
+          <div id="step-evidence" class="step-row flex items-start gap-4 p-3 border border-line bg-card rounded-sm text-mute">
+            <div class="step-indicator w-8 h-8 flex items-center justify-center border border-line font-mono text-xs">4</div>
+            <div>
+              <p class="font-medium">Registry Verification</p>
+              <p class="text-sm">Comparing extracted entities with external registries and news signals.</p>
+            </div>
+          </div>
+          <div id="step-summary" class="step-row flex items-start gap-4 p-3 border border-line bg-card rounded-sm text-mute">
+            <div class="step-indicator w-8 h-8 flex items-center justify-center border border-line font-mono text-xs">5</div>
+            <div>
+              <p class="font-medium">Summary & Recommendation</p>
+              <p class="text-sm">Generating the case narrative and next-step recommendation.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="case-board-stage" class="hidden stage-enter">
+      <div class="board-grid grid grid-cols-1 xl:grid-cols-[1.35fr_.9fr] gap-3">
+        <div class="board-col space-y-3 pr-1">
+          <div class="panel rounded-sm p-4">
+            <div class="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-3">
+              <div>
+                <p class="eyebrow text-mute mb-1">Active Case</p>
+                <h2 id="case-title" class="font-display text-xl md:text-2xl tracking-tight">Sample Exporter A</h2>
+              </div>
+              <div class="flex items-center gap-3">
+                <div class="text-right">
+                  <p class="eyebrow text-mute mb-1">Case ID</p>
+                  <p id="case-id-badge" class="text-sm font-mono text-mute">CASE-001</p>
+                </div>
+                <div id="recommendation-badge" class="px-3 py-2 border rounded-sm text-sm font-medium"></div>
+              </div>
+            </div>
+            <div class="mt-3 pt-3 border-t border-line">
+              <div id="document-tags-list" class="flex flex-wrap gap-2"></div>
+            </div>
+          </div>
+
+          <div class="panel rounded-sm p-4">
+            <div class="flex items-end justify-between mb-3">
+              <div>
+                <p class="eyebrow text-mute mb-1">Extracted Data</p>
+                <h3 class="font-display text-lg tracking-tight">Document Fields</h3>
+              </div>
+              <span class="section-no">01</span>
+            </div>
+            <div id="ocr-failed-panel" class="hidden mb-3 p-3 border border-rose/30 bg-rose/5 rounded-sm"></div>
+            <div id="fields-grid" class="grid grid-cols-1 md:grid-cols-2 gap-3"></div>
+          </div>
+
+          <div id="multi-doc-panel" class="hidden panel rounded-sm p-4">
+            <div class="flex items-end justify-between mb-3">
+              <div>
+                <p class="eyebrow text-mute mb-1">Cross-Document Logic</p>
+                <h3 class="font-display text-lg tracking-tight">Synthesis Matrix</h3>
+              </div>
+              <span class="section-no">02</span>
+            </div>
+            <div class="overflow-x-auto scroll-thin">
+              <table class="w-full text-sm">
+                <thead>
+                  <tr class="border-b border-line text-left">
+                    <th class="py-2 pr-4 eyebrow text-mute">Document</th>
+                    <th class="py-2 pr-4 eyebrow text-mute">Weight</th>
+                    <th class="py-2 pr-4 eyebrow text-mute">Detail</th>
+                    <th class="py-2 text-right eyebrow text-mute">Status</th>
+                  </tr>
+                </thead>
+                <tbody id="synthesis-rows"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="panel rounded-sm p-4">
+            <div class="flex items-end justify-between mb-3">
+              <div>
+                <p class="eyebrow text-mute mb-1">Compliance</p>
+                <h3 class="font-display text-lg tracking-tight">Validation Rules</h3>
+              </div>
+              <span class="section-no">03</span>
+            </div>
+            <div id="validation-checklist" class="space-y-2"></div>
+          </div>
+        </div>
+
+        <aside class="board-col space-y-3 pr-1">
+          <div class="panel rounded-sm p-4">
+            <div class="flex items-end justify-between mb-3">
+              <div>
+                <p class="eyebrow text-mute mb-1">Evidence</p>
+                <h3 class="font-display text-lg tracking-tight">Registry Verification</h3>
+              </div>
+              <span class="section-no">04</span>
+            </div>
+            <div id="evidence-content" class="text-sm leading-6"></div>
+          </div>
+
+          <div class="panel rounded-sm p-4">
+            <div class="flex items-end justify-between mb-3">
+              <div>
+                <p class="eyebrow text-mute mb-1">Synthesis</p>
+                <h3 class="font-display text-lg tracking-tight">Executive Summary</h3>
+              </div>
+              <span class="section-no">05</span>
+            </div>
+            <div id="summary-content" class="text-sm leading-6 text-[#3d3a34]"></div>
+          </div>
+
+          <div id="draft-panel" class="hidden panel rounded-sm p-4">
+            <div class="flex items-end justify-between mb-3">
+              <div>
+                <p class="eyebrow text-mute mb-1">Action</p>
+                <h3 class="font-display text-lg tracking-tight">Follow-up Draft</h3>
+              </div>
+              <span class="section-no">06</span>
+            </div>
+            <textarea id="draft-text" class="w-full h-24 rounded-sm p-3 resize-y text-sm leading-6"></textarea>
+            <div class="mt-3 flex gap-3">
+              <button onclick="copyDraft()" class="flex-1 py-2 rounded-sm bg-cobalt text-white font-medium">Copy Draft</button>
+              <button onclick="regenerateDraft()" class="px-4 py-2 rounded-sm border border-line bg-card hover:bg-shell text-sm font-medium">Regenerate</button>
+            </div>
+          </div>
+
+          <div class="panel rounded-sm p-4" id="scenario-loader-panel">
+            <div class="flex items-end justify-between mb-3">
+              <div>
+                <p class="eyebrow text-mute mb-1">Fixtures</p>
+                <h3 class="font-display text-lg tracking-tight">Scenario Loader</h3>
+              </div>
+              <span class="section-no">07</span>
+            </div>
+            <div class="grid grid-cols-2 gap-2">
+              <button class="scenario-btn text-left px-2.5 py-2 border border-line bg-card rounded-sm transition-colors text-sm" onclick="loadFixture('clean_case')">Clean Case</button>
+              <button class="scenario-btn text-left px-2.5 py-2 border border-line bg-card rounded-sm transition-colors text-sm" onclick="loadFixture('ambiguous_entity')">Ambiguous Entity</button>
+              <button class="scenario-btn text-left px-2.5 py-2 border border-line bg-card rounded-sm transition-colors text-sm" onclick="loadFixture('low_confidence')">Low Confidence</button>
+              <button class="scenario-btn text-left px-2.5 py-2 border border-line bg-card rounded-sm transition-colors text-sm" onclick="loadFixture('missing_field')">Missing Field</button>
+              <button class="scenario-btn text-left px-2.5 py-2 border border-line bg-card rounded-sm transition-colors text-sm" onclick="loadFixture('multi_document')">Multi Document</button>
+              <button class="scenario-btn text-left px-2.5 py-2 border border-line bg-card rounded-sm transition-colors text-sm" onclick="loadFixture('ocr_failed')">OCR Failed</button>
+              <button class="scenario-btn text-left px-2.5 py-2 border border-line bg-card rounded-sm transition-colors text-sm col-span-2" onclick="loadFixture('evidence_timeout')">Evidence Timeout</button>
+            </div>
+          </div>
+        </aside>
+      </div>
+    </section>
+  </main>
+
+  <div id="toast" class="fixed top-6 right-6 translate-x-24 opacity-0 transition-all duration-200 z-50 panel px-4 py-3 rounded-sm text-sm">
+    <div class="flex items-center gap-2">
+      <i data-lucide="bell" class="w-4 h-4 text-cobalt"></i>
+      <span id="toast-message">Saved</span>
+    </div>
+  </div>
+
+  <script>
+    let selectedFiles = [];
+    let currentCaseData = null;
+    let activeFixtureKey = 'clean_case';
+    let currentUploadTimeout = null;
+    let currentStage = 'upload';
+    let selectedCandidateName = null;
+
+    const ICON_PATHS = {
+      'shield-check': '<path d="M20 13c0 5-3.5 7.5-7.5 9a2 2 0 0 1-1 0C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c1.5 0 3.5-.5 5-1.5a2 2 0 0 1 2 0c1.5 1 3.5 1.5 5 1.5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/>',
+      'upload-cloud': '<path d="M4 14.9A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242"/><path d="M12 12v9"/><path d="m16 16-4-4-4 4"/>',
+      'bell': '<path d="M10.268 21a2 2 0 0 0 3.464 0"/><path d="M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326"/>',
+      'file-text': '<path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/>',
+      'file': '<path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/>',
+      'x': '<path d="M18 6 6 18"/><path d="m6 6 12 12"/>',
+      'check': '<path d="M20 6 9 17l-5-5"/>',
+      'check-circle': '<path d="M21.801 10A10 10 0 1 1 17 3.335"/><path d="m9 11 3 3L22 4"/>',
+      'alert-circle': '<circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/>',
+      'alert-octagon': '<path d="M7.86 2h8.28L22 7.86v8.28L16.14 22H7.86L2 16.14V7.86Z"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/>',
+      'wifi-off': '<path d="M12 20h.01"/><path d="M8.5 16.429a5 5 0 0 1 7 0"/><path d="M5 12.859a10 10 0 0 1 5.17-2.69"/><path d="M19 12.859a10 10 0 0 0-2.007-1.523"/><path d="M2 8.82a15 15 0 0 1 4.177-2.643"/><path d="M22 8.82a15 15 0 0 0-11.288-3.764"/><path d="m2 2 20 20"/>',
+      'pencil': '<path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"/><path d="m15 5 4 4"/>'
+    };
+
+    function refreshIcons(scope) {
+      const root = scope || document;
+      root.querySelectorAll('[data-lucide]').forEach((el) => {
+        const name = el.getAttribute('data-lucide');
+        const paths = ICON_PATHS[name];
+        if (!paths) return;
+        const cls = el.getAttribute('class') || '';
+        const wrapper = document.createElement('span');
+        wrapper.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="${cls}">${paths}</svg>`;
+        el.replaceWith(wrapper.firstElementChild);
+      });
+    }
+
+    /* ---------- motion utilities ---------- */
+
+    const reducedMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    function createRipple(event, targetEl, dark) {
+      if (reducedMotion) return;
+      const el = targetEl || event.currentTarget;
+      if (!el || typeof el.getBoundingClientRect !== 'function') return;
+      const prevPosition = getComputedStyle(el).position;
+      if (prevPosition === 'static') el.style.position = 'relative';
+      el.style.overflow = el.style.overflow || 'hidden';
+      const rect = el.getBoundingClientRect();
+      const size = Math.max(rect.width, rect.height) * 1.2;
+      const x = (event.clientX != null ? event.clientX - rect.left : rect.width / 2) - size / 2;
+      const y = (event.clientY != null ? event.clientY - rect.top : rect.height / 2) - size / 2;
+      const ripple = document.createElement('span');
+      ripple.className = 'ripple-el' + (dark ? '' : ' dark');
+      ripple.style.width = ripple.style.height = size + 'px';
+      ripple.style.left = x + 'px';
+      ripple.style.top = y + 'px';
+      el.appendChild(ripple);
+      ripple.addEventListener('animationend', () => ripple.remove());
+      setTimeout(() => ripple.remove(), 700);
+    }
+
+    // universal ripple for any button in the app, including dynamically rendered ones
+    document.addEventListener('click', (e) => {
+      const btn = e.target.closest('button');
+      if (!btn || btn.disabled) return;
+      createRipple(e, btn, btn.classList.contains('bg-cobalt'));
+    });
+
+    function animateCount(el, from, to, duration, formatter) {
+      if (!el) return;
+      if (reducedMotion || from === to) {
+        el.innerText = formatter ? formatter(to) : String(to);
+        return;
+      }
+      const start = performance.now();
+      function tick(now) {
+        const progress = Math.min(1, (now - start) / duration);
+        const eased = 1 - Math.pow(1 - progress, 3);
+        const value = Math.round(from + (to - from) * eased);
+        el.innerText = formatter ? formatter(value) : String(value);
+        if (progress < 1) requestAnimationFrame(tick);
+      }
+      requestAnimationFrame(tick);
+    }
+
+    function launchConfetti(originEl) {
+      if (reducedMotion || !originEl) return;
+      const rect = originEl.getBoundingClientRect();
+      const colors = ['#2647d8', '#0d7a6a', '#9a6612', '#141414'];
+      const count = 22;
+      for (let i = 0; i < count; i++) {
+        const piece = document.createElement('span');
+        piece.className = 'confetti-piece';
+        const size = 4 + Math.random() * 5;
+        piece.style.width = size + 'px';
+        piece.style.height = size + 'px';
+        piece.style.background = colors[i % colors.length];
+        const startX = rect.left + rect.width * Math.random();
+        const startY = rect.top + rect.height * 0.3;
+        piece.style.left = startX + 'px';
+        piece.style.top = startY + 'px';
+        const dx = (Math.random() - 0.5) * 90;
+        const fall = 120 + Math.random() * 90;
+        const spin = 260 + Math.random() * 300;
+        const dur = 700 + Math.random() * 500;
+        piece.animate([
+          { transform: 'translate(0,0) rotate(0deg)', opacity: 1 },
+          { transform: `translate(${dx}px, ${fall}px) rotate(${spin}deg)`, opacity: 0 }
+        ], { duration: dur, easing: 'cubic-bezier(.2,.6,.4,1)' });
+        document.body.appendChild(piece);
+        setTimeout(() => piece.remove(), dur + 50);
+      }
+    }
+
+    // TODO(backend): `fixtures` is placeholder/demo data only. Replace the case objects
+    // below with data returned from the real API. The shape of each case object
+    // (id, title, documents[], fields[], validationRules[], evidence{}, summary{}, synthesis[])
+    // is the contract the rest of this UI expects — keep field names and status enums
+    // ('verified' | 'needs_review' | 'unable_to_verify', etc.) consistent when wiring the
+    // real backend response, or update the render functions below to match the real shape.
+    const fixtures = {
+      clean_case: {
+        id: 'CASE-001',
+        title: 'Sample Exporter A',
+        documents: [
+          { id: 'doc1', name: 'Commercial_Invoice.pdf', type: 'invoice' },
+          { id: 'doc2', name: 'Certificate_Of_Origin.pdf', type: 'origin' }
+        ],
+        fields: [
+          { id: 'shipper', label: 'Shipper Name', value: 'Sample Exporter A', confidence: 0.98, status: 'verified' },
+          { id: 'origin', label: 'Country Of Origin', value: 'Germany', confidence: 0.96, status: 'verified' },
+          { id: 'invoice', label: 'Invoice Value', value: 'EUR 418,250', confidence: 0.94, status: 'verified' },
+          { id: 'purpose', label: 'Purpose Code', value: 'P0102 - Trade Settlement', confidence: 0.91, status: 'verified' }
+        ],
+        validationRules: [
+          { id: 'r1', name: 'Invoice and origin country align across documents', detail: 'All uploaded records reference the same exporter and origin jurisdiction.', status: 'passed' },
+          { id: 'r2', name: 'Purpose code is permitted for declared commodity class', detail: 'Trade settlement purpose code maps to current customs flow.', status: 'passed' },
+          { id: 'r3', name: 'Declared amount remains within expected value band', detail: 'Value matches historical benchmark without outlier signals.', status: 'passed' }
+        ],
+        evidence: {
+          type: 'match',
+          sourceCount: 12,
+          confidenceLabel: 'High Match',
+          candidates: [{ name: 'Sample Exporter A GmbH', country: 'Germany', confidence: 97, sourceCount: 12 }],
+          negativeNewsFlag: false,
+          summary: 'Registry match is strong and supporting records show no adverse media flags in the last monitoring window.'
+        },
+        summary: {
+          text: 'The submitted file set is internally aligned, registry verification is strong, and no material risk signals were found. This case is ready for approval with no additional outreach required.',
+          recommendation: 'approve',
+          badgeLabel: 'Ready For Approval',
+          draft: ''
+        },
+        synthesis: []
+      },
+      ambiguous_entity: {
+        id: 'CASE-014',
+        title: 'Sample Entity B',
+        documents: [
+          { id: 'doc1', name: 'Invoice.pdf', type: 'invoice' }
+        ],
+        fields: [
+          { id: 'shipper', label: 'Shipper Name', value: 'Sample Entity B', confidence: 0.9, status: 'verified' },
+          { id: 'origin', label: 'Country Of Origin', value: 'Singapore', confidence: 0.87, status: 'verified' },
+          { id: 'purpose', label: 'Purpose Code', value: 'P0330 - Marine Equipment', confidence: 0.84, status: 'needs_review' }
+        ],
+        validationRules: [
+          { id: 'r1', name: 'Entity name matched in registry', detail: 'Multiple near-identical entities returned by external verification.', status: 'failed' },
+          { id: 'r2', name: 'Trade purpose remains plausible', detail: 'Purpose code itself is valid, but registry selection is required first.', status: 'passed' }
+        ],
+        evidence: {
+          type: 'ambiguous',
+          sourceCount: 9,
+          confidenceLabel: 'Selection Required',
+          candidates: [
+            { name: 'Sample Entity B Pte Ltd', country: 'Singapore', confidence: 92, sourceCount: 9 },
+            { name: 'Sample Entity B Variant LLC', country: 'United Arab Emirates', confidence: 86, sourceCount: 7 },
+            { name: 'Sample Entity B Logistics Ltd', country: 'Hong Kong', confidence: 81, sourceCount: 6 }
+          ],
+          negativeNewsFlag: false,
+          summary: 'Entity lookup produced several plausible matches and requires user confirmation before approval.'
+        },
+        summary: {
+          text: 'Document extraction is usable, but entity resolution is not yet deterministic. Confirm the correct legal entity before a recommendation can be promoted.',
+          recommendation: 'further_investigation_recommended',
+          badgeLabel: 'Entity Selection Needed',
+          draft: 'Please confirm the legal entity associated with this shipment. Multiple registry candidates were returned, so we need your confirmation before proceeding with approval.'
+        },
+        synthesis: []
+      },
+      low_confidence: {
+        id: 'CASE-021',
+        title: 'Sample Importer C',
+        documents: [
+          { id: 'doc1', name: 'Invoice.pdf', type: 'invoice' },
+          { id: 'doc2', name: 'Packing_List.pdf', type: 'packing' }
+        ],
+        fields: [
+          { id: 'shipper', label: 'Shipper Name', value: 'Sample Importer C', confidence: 0.96, status: 'verified' },
+          { id: 'address', label: 'Importer Address', value: 'NOT_FOUND', confidence: 0.41, status: 'needs_review', suggestion: '100 Main Street, Sample City, ST' },
+          { id: 'invoice', label: 'Invoice Value', value: 'USD 92,100', confidence: 0.93, status: 'verified' },
+          { id: 'purpose', label: 'Purpose Code', value: 'P0410 - Parts Import', confidence: 0.88, status: 'verified' }
+        ],
+        validationRules: [
+          { id: 'r1', name: 'Importer address is fully readable', detail: 'OCR confidence is below the threshold and requires manual verification.', status: 'failed' },
+          { id: 'r2', name: 'Declared value remains consistent across uploads', detail: 'Invoice and packing list amounts align.', status: 'passed' }
+        ],
+        evidence: {
+          type: 'match',
+          sourceCount: 5,
+          confidenceLabel: 'Matched',
+          candidates: [{ name: 'Sample Importer C Inc', country: 'United States', confidence: 93, sourceCount: 5 }],
+          negativeNewsFlag: false,
+          summary: 'Registry match is acceptable. One field remains low confidence and should be corrected before sign-off.'
+        },
+        summary: {
+          text: 'Most signals are clean, but the importer address could not be read with sufficient confidence. A manual correction will resolve the only material gap in this case.',
+          recommendation: 'further_investigation_recommended',
+          badgeLabel: 'Manual Review Needed',
+          draft: 'Please verify the importer address on the submitted invoice. The rest of the file set is consistent, but this field requires confirmation before approval.'
+        },
+        synthesis: []
+      },
+      missing_field: {
+        id: 'CASE-032',
+        title: 'Sample Exporter D',
+        documents: [
+          { id: 'doc1', name: 'Invoice.pdf', type: 'invoice' },
+          { id: 'doc2', name: 'Bill_Of_Lading.pdf', type: 'bill' }
+        ],
+        fields: [
+          { id: 'shipper', label: 'Shipper Name', value: 'Sample Exporter D Ltd', confidence: 0.95, status: 'verified' },
+          { id: 'origin', label: 'Country Of Origin', value: 'India', confidence: 0.92, status: 'verified' },
+          { id: 'purpose', label: 'Purpose Code', value: 'NOT_FOUND', confidence: 0.0, status: 'unable_to_verify', suggestion: 'P0102 - Trade Settlement' }
+        ],
+        validationRules: [
+          { id: 'r1', name: 'Purpose code is present in the uploaded set', detail: 'Missing from the parsed document set and needed for final decisioning.', status: 'failed' },
+          { id: 'r2', name: 'Entity registry match is acceptable', detail: 'External sources confirm the declared company.', status: 'passed' }
+        ],
+        evidence: {
+          type: 'match',
+          sourceCount: 8,
+          confidenceLabel: 'Matched',
+          candidates: [{ name: 'Sample Exporter D Ltd', country: 'India', confidence: 95, sourceCount: 8 }],
+          negativeNewsFlag: true,
+          summary: 'Registry match is good, but one adverse media mention suggests shipment delays that merit a light review.'
+        },
+        summary: {
+          text: 'The case is structurally sound, but the purpose code is missing from the extracted set and should be reconstructed or supplied manually before completion.',
+          recommendation: 'additional_documents_required',
+          badgeLabel: 'Missing Required Field',
+          draft: 'We could not verify the declared purpose code from the current documents. Please provide the missing code or upload a supporting document so we can complete the review.'
+        },
+        synthesis: []
+      },
+      multi_document: {
+        id: 'CASE-048',
+        title: 'Sample Consortium E',
+        documents: [
+          { id: 'doc1', name: 'Invoice.pdf', type: 'invoice' },
+          { id: 'doc2', name: 'Packing_List.pdf', type: 'packing' },
+          { id: 'doc3', name: 'Certificate_Origin.pdf', type: 'origin' }
+        ],
+        fields: [
+          { id: 'shipper', label: 'Shipper Name', value: 'Sample Consortium E', confidence: 0.98, status: 'verified' },
+          { id: 'origin', label: 'Country Of Origin', value: 'Japan', confidence: 0.96, status: 'verified' },
+          { id: 'weight', label: 'Declared Net Weight', value: '4,850 KG', confidence: 0.94, status: 'verified' },
+          { id: 'commodity', label: 'Commodity Code', value: 'HS 8504.40', confidence: 0.9, status: 'verified' }
+        ],
+        validationRules: [
+          { id: 'r1', name: 'Weights align across all uploaded documents', detail: 'Invoice, packing list, and certificate all reference the same shipment mass.', status: 'passed' },
+          { id: 'r2', name: 'Commodity coding is consistent', detail: 'HS references agree across the extracted records.', status: 'passed' }
+        ],
+        evidence: {
+          type: 'match',
+          sourceCount: 11,
+          confidenceLabel: 'High Match',
+          candidates: [{ name: 'Sample Consortium E KK', country: 'Japan', confidence: 96, sourceCount: 11 }],
+          negativeNewsFlag: false,
+          summary: 'Entity verification is clean and multi-document reconciliation succeeded.'
+        },
+        summary: {
+          text: 'All uploaded documents agree on value-defining shipment details, and the registry lookup supports the declared exporter. This is a strong approval candidate.',
+          recommendation: 'approve',
+          badgeLabel: 'Aligned Across Documents',
+          draft: ''
+        },
+        synthesis: [
+          { doc: 'Invoice.pdf', weight: '4,850 KG', value: 'HS 8504.40' },
+          { doc: 'Packing_List.pdf', weight: '4,850 KG', value: 'HS 8504.40' },
+          { doc: 'Certificate_Origin.pdf', weight: '4,850 KG', value: 'JP Origin / HS 8504.40' }
+        ]
+      },
+      ocr_failed: {
+        id: 'CASE-ERR-001',
+        title: 'Corrupted Source Upload',
+        documents: [
+          { id: 'doc1', name: 'Damaged_Scan.pdf', type: 'invoice' }
+        ],
+        fields: [],
+        validationRules: [],
+        evidence: {
+          type: 'error',
+          error: 'ocr_failed',
+          summary: 'OCR could not recover legible content from the upload.'
+        },
+        summary: {
+          text: 'Document OCR failed before structured extraction could begin. Manual entry or a cleaner file upload is required.',
+          recommendation: 'additional_documents_required',
+          badgeLabel: 'OCR Failed',
+          draft: 'We were unable to read the uploaded document reliably. Please re-upload a clearer copy or provide the essential fields manually so the review can continue.'
+        },
+        synthesis: []
+      },
+      evidence_timeout: {
+        id: 'CASE-ERR-002',
+        title: 'Registry Lookup Timeout',
+        documents: [
+          { id: 'doc1', name: 'Invoice.pdf', type: 'invoice' }
+        ],
+        fields: [
+          { id: 'shipper', label: 'Shipper Name', value: 'Sample Trade Partner F', confidence: 0.92, status: 'verified' },
+          { id: 'purpose', label: 'Purpose Code', value: 'P0102 - Trade Settlement', confidence: 0.88, status: 'verified' }
+        ],
+        validationRules: [
+          { id: 'r1', name: 'Local document rules pass', detail: 'Uploaded fields are internally consistent.', status: 'passed' }
+        ],
+        evidence: {
+          type: 'error',
+          error: 'evidence_timeout',
+          summary: 'External verification service did not return within the monitoring window.'
+        },
+        summary: {
+          text: 'The case looks internally consistent, but external registry validation timed out. Retry evidence lookup before final approval.',
+          recommendation: 'further_investigation_recommended',
+          badgeLabel: 'Evidence Timeout',
+          draft: 'Our external registry verification did not complete in time. Please retry the lookup or proceed with a manual registry check before issuing final approval.'
+        },
+        synthesis: []
+      }
+    };
+
+    // TODO(backend): selectedFiles currently never leaves the browser. Wire the actual
+    // upload (e.g. multipart/form-data POST) wherever startProcessing() is triggered below.
+    function handleFileSelect(event) {
+      selectedFiles = Array.from(event.target.files);
+      renderFileList();
+    }
+
+    function handleFiles(files) {
+      selectedFiles = Array.from(files);
+      renderFileList();
+    }
+
+    function renderFileList() {
+      const container = document.getElementById('selected-files-container');
+      const list = document.getElementById('selected-files-list');
+      const count = document.getElementById('selected-files-count');
+      list.innerHTML = '';
+
+      if (!selectedFiles.length) {
+        container.classList.add('hidden');
+        count.innerText = '0 files';
+        return;
+      }
+
+      container.classList.remove('hidden');
+      count.innerText = `${selectedFiles.length} file${selectedFiles.length === 1 ? '' : 's'}`;
+
+      selectedFiles.forEach((file, idx) => {
+        const item = document.createElement('div');
+        item.className = 'reveal-card flex items-center justify-between gap-3 px-4 py-3 border border-line bg-card rounded-sm hover:border-cobalt/40 transition-colors';
+        item.style.animationDelay = (idx * 50) + 'ms';
+        item.innerHTML = `
+          <div class="min-w-0 flex items-center gap-3">
+            <div class="w-9 h-9 flex items-center justify-center border border-line bg-shell shrink-0">
+              <i data-lucide="file-text" class="w-4 h-4 text-cobalt"></i>
+            </div>
+            <div class="min-w-0">
+              <p class="text-sm font-medium truncate">${file.name}</p>
+              <p class="text-[11px] text-mute font-mono uppercase tracking-wider">${(file.size / 1024).toFixed(1)} KB</p>
+            </div>
+          </div>
+          <button onclick="removeFile(${idx}, event)" class="text-mute hover:text-rose">
+            <i data-lucide="x" class="w-4 h-4"></i>
+          </button>
+        `;
+        list.appendChild(item);
+      });
+
+      refreshIcons();
+    }
+
+    function removeFile(idx, event) {
+      event.preventDefault();
+      selectedFiles.splice(idx, 1);
+      renderFileList();
+    }
+
+    function switchStage(hideEl, showEl, afterShow) {
+      if (hideEl) {
+        hideEl.classList.remove('stage-enter');
+        hideEl.classList.add('stage-exit');
+        setTimeout(() => {
+          hideEl.classList.add('hidden');
+          hideEl.classList.remove('stage-exit');
+          if (showEl) {
+            showEl.classList.remove('hidden');
+            showEl.classList.remove('stage-enter');
+            void showEl.offsetWidth;
+            showEl.classList.add('stage-enter');
+          }
+          if (afterShow) afterShow();
+        }, 240);
+      } else if (showEl) {
+        showEl.classList.remove('hidden');
+        showEl.classList.remove('stage-enter');
+        void showEl.offsetWidth;
+        showEl.classList.add('stage-enter');
+        if (afterShow) afterShow();
+      }
+    }
+
+    function startProcessing(event) {
+      if (event) createRipple(event, event.currentTarget, true);
+      switchStage(document.getElementById('upload-stage'), document.getElementById('processing-stage'), () => {
+        currentStage = 'processing';
+        runProcessingSteps();
+      });
+    }
+
+    // TODO(backend): this whole function is a fixed-timing UI simulation (setTimeout per step).
+    // Replace with real status updates from the backend (polling or a socket/SSE connection),
+    // driving markActive/step-done state off the actual pipeline stage instead of a timer.
+    function runProcessingSteps() {
+      const steps = ['ocr', 'extraction', 'validation', 'evidence', 'summary'];
+      let currentIdx = 0;
+      const progressBar = document.getElementById('progress-bar');
+      const progressPercent = document.getElementById('progress-percent');
+      const progressHead = document.getElementById('progress-head');
+
+      document.querySelectorAll('.step-row').forEach((row) => row.classList.remove('is-active', 'is-done'));
+
+      function markActive(idx) {
+        const stepEl = document.getElementById(`step-${steps[idx]}`);
+        if (stepEl) stepEl.classList.add('is-active');
+      }
+
+      function nextStep() {
+        if (currentIdx >= steps.length) {
+          progressBar.style.width = '100%';
+          progressHead.style.left = '100%';
+          animateCount(progressPercent, parseInt(progressPercent.innerText) || 0, 100, 300, (v) => `${v}%`);
+          setTimeout(showCaseBoard, 400);
+          return;
+        }
+
+        const pctStart = Math.round((currentIdx / steps.length) * 100);
+        const pctEnd = Math.round(((currentIdx + 1) / steps.length) * 100);
+        const stepId = steps[currentIdx];
+        const stepEl = document.getElementById(`step-${stepId}`);
+        const indicator = stepEl.querySelector('.step-indicator');
+
+        progressBar.style.width = `${pctEnd}%`;
+        progressHead.style.left = `${pctEnd}%`;
+        animateCount(progressPercent, pctStart, pctEnd, 650, (v) => `${v}%`);
+        markActive(currentIdx);
+
+        currentUploadTimeout = setTimeout(() => {
+          indicator.innerHTML = '<i data-lucide="check" class="w-4 h-4"></i>';
+          refreshIcons();
+          indicator.classList.add('step-check-pop');
+          const ring = document.createElement('span');
+          ring.className = 'step-ring';
+          indicator.style.position = 'relative';
+          indicator.appendChild(ring);
+          setTimeout(() => ring.remove(), 600);
+          stepEl.classList.remove('is-active');
+          stepEl.classList.add('is-done');
+          currentIdx += 1;
+          nextStep();
+        }, 700);
+      }
+
+      nextStep();
+    }
+
+    function sizeCaseBoard() {
+      const stage = document.getElementById('case-board-stage');
+      if (!stage || stage.classList.contains('hidden')) return;
+      if (window.innerWidth < 1280) {
+        stage.style.height = '';
+        return;
+      }
+      const top = stage.getBoundingClientRect().top;
+      const available = window.innerHeight - top - 16;
+      stage.style.height = Math.max(360, available) + 'px';
+    }
+    window.addEventListener('resize', sizeCaseBoard);
+
+    function showCaseBoard() {
+      switchStage(document.getElementById('processing-stage'), document.getElementById('case-board-stage'), () => {
+        document.getElementById('case-board-stage').classList.add('fit-active');
+        currentStage = 'board';
+        renderCaseBoard(currentCaseData || fixtures.clean_case);
+        requestAnimationFrame(sizeCaseBoard);
+      });
+    }
+
+    function resetFlow(event) {
+      if (event) createRipple(event, event.currentTarget, false);
+      clearTimeout(currentUploadTimeout);
+      selectedFiles = [];
+      currentCaseData = JSON.parse(JSON.stringify(fixtures[activeFixtureKey] || fixtures.clean_case));
+      currentStage = 'upload';
+      document.getElementById('file-input').value = '';
+
+      const board = document.getElementById('case-board-stage');
+      const processing = document.getElementById('processing-stage');
+      const upload = document.getElementById('upload-stage');
+      const activeEl = !board.classList.contains('hidden') ? board : (!processing.classList.contains('hidden') ? processing : null);
+
+      // instantly hide whichever stage is not the currently active one
+      if (activeEl !== board) board.classList.add('hidden');
+      if (activeEl !== processing) processing.classList.add('hidden');
+      board.classList.remove('fit-active');
+
+      switchStage(activeEl, upload, () => {
+        renderFileList();
+        showToast('Ready for new case');
+      });
+    }
+
+    function loadFixture(key) {
+      activeFixtureKey = key;
+      selectedCandidateName = null;
+      currentCaseData = JSON.parse(JSON.stringify(fixtures[key]));
+
+      document.querySelectorAll('.scenario-btn').forEach((btn) => {
+        btn.classList.toggle('active', btn.getAttribute('onclick').includes(`'${key}'`));
+      });
+
+      if (currentStage === 'board') {
+        renderCaseBoard(currentCaseData);
+      }
+    }
+
+    function renderCaseBoard(data) {
+      if (!data) return;
+
+      document.getElementById('case-title').innerText = data.title;
+      document.getElementById('case-id-badge').innerText = data.id;
+
+      const recommendationBadge = document.getElementById('recommendation-badge');
+      const rec = data.summary.recommendation;
+      recommendationBadge.classList.remove('badge-pulse');
+      if (rec === 'approve') {
+        recommendationBadge.className = 'px-4 py-3 border rounded-sm text-sm font-medium bg-teal/10 border-teal/20 text-teal badge-pulse';
+        recommendationBadge.innerHTML = '<i data-lucide="check-circle" class="inline w-4 h-4 mr-2"></i>' + data.summary.badgeLabel;
+      } else if (rec === 'further_investigation_recommended') {
+        recommendationBadge.className = 'px-4 py-3 border rounded-sm text-sm font-medium bg-amber/10 border-amber/20 text-amber badge-pulse';
+        recommendationBadge.innerHTML = '<i data-lucide="alert-circle" class="inline w-4 h-4 mr-2"></i>' + data.summary.badgeLabel;
+      } else {
+        recommendationBadge.className = 'px-4 py-3 border rounded-sm text-sm font-medium bg-rose/10 border-rose/20 text-rose badge-pulse';
+        recommendationBadge.innerHTML = '<i data-lucide="alert-octagon" class="inline w-4 h-4 mr-2"></i>' + data.summary.badgeLabel;
+      }
+      void recommendationBadge.offsetWidth;
+      recommendationBadge.classList.add('stamp');
+      if (rec === 'approve') {
+        setTimeout(() => launchConfetti(recommendationBadge), 150);
+      }
+
+      const tags = document.getElementById('document-tags-list');
+      tags.innerHTML = '';
+      data.documents.forEach((doc) => {
+        const tag = document.createElement('span');
+        tag.className = 'inline-flex items-center gap-2 px-3 py-2 border border-line bg-card rounded-sm text-sm';
+        tag.innerHTML = `<i data-lucide="file" class="w-4 h-4 text-cobalt"></i>${doc.name}`;
+        tags.appendChild(tag);
+      });
+
+      const ocrPanel = document.getElementById('ocr-failed-panel');
+      if (data.evidence && data.evidence.error === 'ocr_failed') {
+        ocrPanel.classList.remove('hidden');
+        ocrPanel.innerHTML = `
+          <div class="flex items-start gap-3">
+            <i data-lucide="alert-octagon" class="w-5 h-5 text-rose mt-0.5"></i>
+            <div class="flex-1">
+              <p class="font-medium text-rose mb-2">The document could not be read reliably.</p>
+              <p class="text-sm text-[#544f45] mb-4">You can manually enter the essential case fields below to continue the review.</p>
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <input id="manual-importer" class="field-input rounded-sm px-3 py-2 text-sm" placeholder="Importer name">
+                <input id="manual-purpose" class="field-input rounded-sm px-3 py-2 text-sm" placeholder="Purpose code">
+              </div>
+              <button onclick="submitManualCase()" class="mt-4 px-4 py-2 rounded-sm bg-cobalt text-white text-sm font-medium">Save & Continue</button>
+            </div>
+          </div>
+        `;
+      } else {
+        ocrPanel.classList.add('hidden');
+        ocrPanel.innerHTML = '';
+      }
+
+      const fieldsGrid = document.getElementById('fields-grid');
+      fieldsGrid.innerHTML = '';
+      if (!data.fields.length) {
+        fieldsGrid.innerHTML = '<p class="text-sm text-mute">No structured fields available yet.</p>';
+      } else {
+        data.fields.forEach((field, fieldIdx) => {
+          const conf = Math.round((field.confidence || 0) * 100);
+          let badgeClass = 'bg-teal/10 border-teal/20 text-teal';
+          let badgeLabel = 'Verified';
+          let badgeIcon = 'check-circle';
+
+          if (field.status === 'needs_review') {
+            badgeClass = 'bg-amber/10 border-amber/20 text-amber';
+            badgeLabel = 'Review';
+            badgeIcon = 'alert-circle';
+          }
+          if (field.status === 'unable_to_verify') {
+            badgeClass = 'bg-rose/10 border-rose/20 text-rose';
+            badgeLabel = 'Missing';
+            badgeIcon = 'alert-octagon';
+          }
+          if (field.status === 'manually_corrected') {
+            badgeClass = 'bg-cobalt/10 border-cobalt/20 text-cobalt';
+            badgeLabel = 'Corrected';
+            badgeIcon = 'pencil';
+          }
+
+          const card = document.createElement('div');
+          card.className = 'reveal-card border border-line bg-card rounded-sm p-3';
+          card.style.animationDelay = (fieldIdx * 60) + 'ms';
+          card.innerHTML = `
+            <div class="flex items-start justify-between gap-3">
+              <div class="min-w-0 flex-1">
+                <p class="eyebrow text-mute mb-1">${field.label}</p>
+                <div id="view-${field.id}" class="text-sm font-medium break-words">${field.value === 'NOT_FOUND' ? '—' : field.value}</div>
+                <div id="edit-${field.id}" class="hidden">
+                  <input id="input-${field.id}" class="field-input rounded-sm px-3 py-2 text-sm w-full" value="${field.value === 'NOT_FOUND' ? '' : field.value}">
+                  <div class="mt-2 flex gap-2">
+                    <button onclick="saveFieldCorrection('${field.id}')" class="px-3 py-2 bg-cobalt text-white rounded-sm text-sm">Save</button>
+                    <button onclick="cancelFieldCorrection('${field.id}')" class="px-3 py-2 border border-line bg-card rounded-sm text-sm">Cancel</button>
+                  </div>
+                </div>
+                ${field.confidence ? `
+                  <div class="mt-2">
+                    <div class="flex items-center justify-between mb-1">
+                      <span class="text-[11px] text-mute font-mono uppercase tracking-wider">Confidence</span>
+                      <span id="conf-num-${field.id}" class="text-[11px] text-mute font-mono">0%</span>
+                    </div>
+                    <div class="h-1.5 bg-[#e2ddd0] rounded-full overflow-hidden">
+                      <div class="conf-bar-fill h-full bg-gradient-to-r from-cobalt to-teal" style="width:0%" data-target="${conf}"></div>
+                    </div>
+                  </div>
+                ` : ''}
+              </div>
+              <div class="flex flex-col items-end gap-2">
+                <span class="inline-flex items-center gap-1 px-2 py-1 border rounded-sm text-[11px] font-mono uppercase tracking-wider ${badgeClass}">
+                  <i data-lucide="${badgeIcon}" class="w-3.5 h-3.5"></i>${badgeLabel}
+                </span>
+                ${field.status !== 'manually_corrected' ? `<button onclick="triggerFieldCorrection('${field.id}')" class="text-[11px] text-cobalt font-mono uppercase tracking-wider">Edit</button>` : ''}
+              </div>
+            </div>
+            ${field.suggestion ? `
+              <div class="mt-4 p-3 border border-cobalt/20 bg-cobalt/5 rounded-sm">
+                <p class="text-[11px] font-mono uppercase tracking-wider text-cobalt mb-2">Suggested Recovery</p>
+                <p class="text-sm mb-3">${field.suggestion}</p>
+                <div class="flex gap-2">
+                  <button onclick="confirmReconstruction('${field.id}', '${field.suggestion.replace(/'/g, "\\'")}')" class="px-3 py-2 bg-cobalt text-white rounded-sm text-sm">Accept</button>
+                  <button onclick="rejectReconstruction('${field.id}')" class="px-3 py-2 border border-line bg-card rounded-sm text-sm">Dismiss</button>
+                </div>
+              </div>
+            ` : ''}
+          `;
+          fieldsGrid.appendChild(card);
+        });
+        requestAnimationFrame(() => {
+          fieldsGrid.querySelectorAll('.conf-bar-fill').forEach((bar) => {
+            const target = parseInt(bar.getAttribute('data-target'), 10) || 0;
+            const numEl = bar.closest('.mt-2').querySelector('[id^="conf-num-"]');
+            animateCount(numEl, 0, target, 900, (v) => `${v}%`);
+            bar.style.width = bar.getAttribute('data-target') + '%';
+          });
+        });
+      }
+
+      const multiPanel = document.getElementById('multi-doc-panel');
+      const synthRows = document.getElementById('synthesis-rows');
+      if (data.synthesis && data.synthesis.length) {
+        multiPanel.classList.remove('hidden');
+        synthRows.innerHTML = '';
+        data.synthesis.forEach((row) => {
+          const tr = document.createElement('tr');
+          tr.className = 'border-b border-line last:border-0';
+          tr.innerHTML = `
+            <td class="py-3 pr-4">${row.doc}</td>
+            <td class="py-3 pr-4 font-mono text-[13px]">${row.weight}</td>
+            <td class="py-3 pr-4 font-mono text-[13px]">${row.value || '—'}</td>
+            <td class="py-3 text-right"><span class="inline-flex px-2 py-1 rounded-sm bg-teal/10 border border-teal/20 text-teal text-[11px] font-mono uppercase tracking-wider">Aligned</span></td>
+          `;
+          synthRows.appendChild(tr);
+        });
+      } else {
+        multiPanel.classList.add('hidden');
+      }
+
+      const checklist = document.getElementById('validation-checklist');
+      checklist.innerHTML = '';
+      if (!data.validationRules.length) {
+        checklist.innerHTML = '<p class="text-sm text-mute">No validation rules were produced for this scenario.</p>';
+      } else {
+        data.validationRules.forEach((rule, ruleIdx) => {
+          const pass = rule.status === 'passed';
+          const node = document.createElement('div');
+          node.className = `reveal-card p-3 border rounded-sm ${pass ? 'border-teal/20 bg-teal/5' : 'border-rose/20 bg-rose/5'}`;
+          node.style.animationDelay = (ruleIdx * 70) + 'ms';
+          node.innerHTML = `
+            <div class="flex items-start justify-between gap-4">
+              <div>
+                <p class="font-medium mb-1">${rule.name}</p>
+                <p class="text-sm text-[#555145]">${rule.detail}</p>
+              </div>
+              <span class="inline-flex items-center gap-1 px-2 py-1 rounded-sm border text-[11px] font-mono uppercase tracking-wider ${pass ? 'border-teal/20 text-teal bg-teal/10' : 'border-rose/20 text-rose bg-rose/10'}">
+                <i data-lucide="${pass ? 'check' : 'x'}" class="w-3.5 h-3.5"></i>${rule.status}
+              </span>
+            </div>
+          `;
+          checklist.appendChild(node);
+        });
+      }
+
+      const evidenceContent = document.getElementById('evidence-content');
+      if (!data.evidence) {
+        evidenceContent.innerHTML = '<p class="text-sm text-mute">No evidence returned.</p>';
+      } else if (data.evidence.type === 'error') {
+        let message = 'Unknown evidence error.';
+        if (data.evidence.error === 'ocr_failed') message = 'OCR failed before registry lookup could begin.';
+        if (data.evidence.error === 'evidence_timeout') message = 'The registry verification service timed out.';
+        evidenceContent.innerHTML = `
+          <div class="p-3 border border-rose/20 bg-rose/5 rounded-sm">
+            <div class="flex items-start gap-3">
+              <i data-lucide="wifi-off" class="w-5 h-5 text-rose mt-0.5"></i>
+              <div>
+                <p class="font-medium text-rose mb-1">Verification interrupted</p>
+                <p class="text-sm text-[#555145]">${message}</p>
+              </div>
+            </div>
+          </div>
+        `;
+      } else {
+        const negative = data.evidence.negativeNewsFlag ? `
+          <div class="mb-4 p-3 border border-amber/20 rounded-sm" style="background: rgba(154, 102, 18, .06);">
+            <p class="text-[11px] font-mono uppercase tracking-wider text-amber mb-1">Adverse Media Flag</p>
+            <p class="text-sm text-[#555145]">A light negative-news signal was detected and should be reviewed before final release.</p>
+          </div>
+        ` : '';
+
+        const candidates = data.evidence.candidates.map((cand, idx) => {
+          const checked = selectedCandidateName ? selectedCandidateName === cand.name : idx === 0;
+          if (checked && !selectedCandidateName) selectedCandidateName = cand.name;
+          return `
+            <label class="reveal-card block p-3 border ${checked ? 'border-cobalt/50 bg-cobalt/5' : 'border-line bg-card'} rounded-sm cursor-pointer hover:border-cobalt hover:-translate-y-0.5 transition-all duration-200 mb-2" style="animation-delay:${idx * 70}ms">
+              <div class="flex items-start justify-between gap-3">
+                <div class="flex items-start gap-3">
+                  <input type="radio" name="entityCandidate" value="${cand.name}" ${checked ? 'checked' : ''} onchange="selectCandidate('${cand.name.replace(/'/g, "\\'")}')" class="mt-1 accent-cobalt">
+                  <div>
+                    <p class="font-medium">${cand.name}</p>
+                    <p class="text-sm text-mute">${cand.country}</p>
+                  </div>
+                </div>
+                <div class="text-right">
+                  <p class="text-sm font-mono text-cobalt">${cand.confidence}%</p>
+                  <p class="text-[11px] text-mute font-mono uppercase tracking-wider">${cand.sourceCount} sources</p>
+                </div>
+              </div>
+            </label>
+          `;
+        }).join('');
+
+        evidenceContent.innerHTML = `
+          <div class="flex items-center justify-between mb-3 pb-3 border-b border-line">
+            <div>
+              <p class="eyebrow text-mute mb-1">Lookup Confidence</p>
+              <p class="font-display text-lg">${data.evidence.confidenceLabel}</p>
+            </div>
+            <div class="text-right">
+              <p class="eyebrow text-mute mb-1">Sources</p>
+              <p class="font-mono text-sm">${data.evidence.sourceCount}</p>
+            </div>
+          </div>
+          ${negative}
+          <p class="text-sm text-[#555145] mb-3">${data.evidence.summary}</p>
+          <div>${candidates}</div>
+          ${data.evidence.candidates.length > 1 ? `<button onclick="confirmActiveCandidate()" class="mt-3 w-full py-2 bg-cobalt text-white rounded-sm text-sm font-medium">Confirm Selected Entity</button>` : ''}
+        `;
+      }
+
+      document.getElementById('summary-content').innerText = data.summary.text || 'Summary unavailable.';
+
+      const draftPanel = document.getElementById('draft-panel');
+      if (data.summary.draft) {
+        draftPanel.classList.remove('hidden');
+        document.getElementById('draft-text').value = data.summary.draft;
+      } else {
+        draftPanel.classList.add('hidden');
+      }
+
+      refreshIcons();
+    }
+
+    function triggerFieldCorrection(fieldId) {
+      document.getElementById(`view-${fieldId}`).classList.add('hidden');
+      document.getElementById(`edit-${fieldId}`).classList.remove('hidden');
+      document.getElementById(`input-${fieldId}`).focus();
+    }
+
+    function cancelFieldCorrection(fieldId) {
+      document.getElementById(`view-${fieldId}`).classList.remove('hidden');
+      document.getElementById(`edit-${fieldId}`).classList.add('hidden');
+    }
+
+    function saveFieldCorrection(fieldId) {
+      const field = currentCaseData.fields.find((f) => f.id === fieldId);
+      if (!field) return;
+      const inputVal = document.getElementById(`input-${fieldId}`).value.trim();
+      field.value = inputVal || 'NOT_FOUND';
+      field.status = 'manually_corrected';
+      delete field.suggestion;
+
+      currentCaseData.validationRules.forEach((rule) => {
+        if (rule.status === 'failed') rule.detail = 'Corrected manually and ready for re-review.';
+      });
+
+      if (activeFixtureKey === 'low_confidence' || activeFixtureKey === 'missing_field') {
+        currentCaseData.summary.recommendation = 'approve';
+        currentCaseData.summary.badgeLabel = 'Corrected And Verified';
+        currentCaseData.summary.text = 'The outstanding extraction issue was corrected manually. With the recovered field in place, the case is ready for approval.';
+        currentCaseData.summary.draft = '';
+      }
+
+      showToast('Field correction saved');
+      renderCaseBoard(currentCaseData);
+    }
+
+    function confirmReconstruction(fieldId, suggestedValue) {
+      const field = currentCaseData.fields.find((f) => f.id === fieldId);
+      if (!field) return;
+      field.value = suggestedValue;
+      field.status = 'manually_corrected';
+      delete field.suggestion;
+      currentCaseData.validationRules.forEach((rule) => {
+        if (rule.status === 'failed') rule.status = 'passed';
+      });
+      currentCaseData.summary.recommendation = 'approve';
+      currentCaseData.summary.badgeLabel = 'Recovered And Verified';
+      currentCaseData.summary.text = 'The missing value was reconstructed and accepted. Cross-checks now pass and the case can move forward.';
+      currentCaseData.summary.draft = '';
+      showToast('Suggestion applied');
+      renderCaseBoard(currentCaseData);
+    }
+
+    function rejectReconstruction(fieldId) {
+      const field = currentCaseData.fields.find((f) => f.id === fieldId);
+      if (!field) return;
+      delete field.suggestion;
+      showToast('Suggestion dismissed');
+      renderCaseBoard(currentCaseData);
+    }
+
+    function submitManualCase() {
+      const importer = document.getElementById('manual-importer').value.trim() || 'Manual Importer';
+      const purpose = document.getElementById('manual-purpose').value.trim() || 'P0102 - Trade Settlement';
+
+      currentCaseData.fields = [
+        { id: 'manual-importer-field', label: 'Importer Name', value: importer, confidence: 1, status: 'manually_corrected' },
+        { id: 'manual-purpose-field', label: 'Purpose Code', value: purpose, confidence: 1, status: 'manually_corrected' }
+      ];
+      currentCaseData.validationRules = [
+        { id: 'manual-rule', name: 'Manual details entered for continuity', detail: 'Essential case fields were supplied manually after OCR failure.', status: 'passed' }
+      ];
+      currentCaseData.evidence = {
+        type: 'match',
+        sourceCount: 1,
+        confidenceLabel: 'Manual Continuation',
+        candidates: [{ name: importer, country: 'Pending Manual Verification', confidence: 100, sourceCount: 1 }],
+        negativeNewsFlag: false,
+        summary: 'The review has been resumed with manual data entry. Registry confirmation should still be checked by an operator.'
+      };
+      currentCaseData.summary = {
+        text: 'Core fields have now been entered manually, allowing the case to continue despite the unreadable upload. A final human registry check is still recommended.',
+        recommendation: 'further_investigation_recommended',
+        badgeLabel: 'Manual Continuation',
+        draft: 'The uploaded file could not be read automatically, but the case has been resumed with manual field entry. Please complete a final manual registry verification before closing the review.'
+      };
+
+      showToast('Manual case details saved');
+      renderCaseBoard(currentCaseData);
+    }
+
+    function selectCandidate(name) {
+      selectedCandidateName = name;
+    }
+
+    function confirmActiveCandidate() {
+      if (!selectedCandidateName) return;
+      currentCaseData.evidence.candidates = [{ name: selectedCandidateName, country: 'Confirmed Registry Match', confidence: 100, sourceCount: currentCaseData.evidence.sourceCount }];
+      currentCaseData.validationRules.forEach((rule) => {
+        if (rule.name.toLowerCase().includes('entity')) {
+          rule.status = 'passed';
+          rule.detail = `Registry entity confirmed as ${selectedCandidateName}.`;
+        }
+      });
+      currentCaseData.summary.recommendation = 'approve';
+      currentCaseData.summary.badgeLabel = 'Entity Confirmed';
+      currentCaseData.summary.text = `The correct registry entity was confirmed as ${selectedCandidateName}. With entity resolution complete, the case is ready for approval.`;
+      currentCaseData.summary.draft = '';
+      showToast('Entity confirmed');
+      renderCaseBoard(currentCaseData);
+    }
+
+    function copyDraft() {
+      navigator.clipboard.writeText(document.getElementById('draft-text').value)
+        .then(() => showToast('Draft copied'))
+        .catch(() => showToast('Copy failed'));
+    }
+
+    function regenerateDraft() {
+      const title = currentCaseData ? currentCaseData.title : 'the case';
+      document.getElementById('draft-text').value = `Please review ${title} and complete the remaining verification checks before final decisioning. We have paused automatic approval pending manual confirmation of the flagged issue.`;
+      showToast('Draft regenerated');
+    }
+
+    function showToast(message) {
+      const toast = document.getElementById('toast');
+      document.getElementById('toast-message').innerText = message;
+      toast.classList.remove('translate-x-24', 'opacity-0');
+      setTimeout(() => {
+        toast.classList.add('translate-x-24', 'opacity-0');
+      }, 2200);
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      const dropZone = document.getElementById('drop-zone');
+
+      dropZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        dropZone.style.borderColor = '#2647d8';
+        dropZone.style.backgroundColor = 'rgba(38,71,216,.04)';
+        dropZone.classList.add('drag-active');
+      });
+
+      dropZone.addEventListener('dragleave', () => {
+        dropZone.style.borderColor = '#d5d0c3';
+        dropZone.style.backgroundColor = '';
+        dropZone.classList.remove('drag-active');
+      });
+
+      dropZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropZone.style.borderColor = '#d5d0c3';
+        dropZone.style.backgroundColor = '';
+        dropZone.classList.remove('drag-active');
+        if (e.dataTransfer.files.length) handleFiles(e.dataTransfer.files);
+      });
+
+      loadFixture('clean_case');
+      currentCaseData = JSON.parse(JSON.stringify(fixtures.clean_case));
+      refreshIcons();
+
+      // TODO(backend): the Scenario Loader panel is a QA/demo tool for previewing the
+      // 7 mock case states and has no place in production. It's hidden by default;
+      // append ?demo=true to the URL to show it while testing locally. Once the real
+      // backend is wired in, delete this panel and loadFixture() entirely.
+      const scenarioPanel = document.getElementById('scenario-loader-panel');
+      if (scenarioPanel && new URLSearchParams(window.location.search).get('demo') !== 'true') {
+        scenarioPanel.style.display = 'none';
+      }
+
+      if (window.matchMedia && window.matchMedia('(pointer: fine)').matches && !reducedMotion) {
+        document.addEventListener('mousemove', (e) => {
+          const el = e.target.closest('.panel');
+          if (!el) return;
+          const rect = el.getBoundingClientRect();
+          const mx = ((e.clientX - rect.left) / rect.width) * 100;
+          const my = ((e.clientY - rect.top) / rect.height) * 100;
+          el.style.setProperty('--mx', mx + '%');
+          el.style.setProperty('--my', my + '%');
+        });
+      }
+    });
+  </script>
+</body>
+</html>
