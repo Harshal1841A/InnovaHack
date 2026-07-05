@@ -1,4 +1,7 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse, HTMLResponse
+import os
 from typing import Dict, Any
 import uuid
 from dotenv import load_dotenv
@@ -11,9 +14,25 @@ from evidence import get_evidence_for_query
 
 app = FastAPI(title="Aegis Backend (Harshal's Scope)")
 
+# Allow CORS for local development and deployed frontend integration
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 @app.on_event("startup")
 def on_startup():
     init_db()
+
+@app.get("/")
+def serve_frontend():
+    if os.path.exists("frontend.html"):
+        return FileResponse("frontend.html")
+    return HTMLResponse("<h1>Aegis Backend Running</h1><p>frontend.html not found</p>")
+
 
 @app.post("/upload")
 def upload_document() -> Dict[str, str]:
