@@ -5,3 +5,6 @@ tavily-python
 openai
 python-multipart
 python-dotenv
+python-dateutil
+rapidfuzz
+pytest
